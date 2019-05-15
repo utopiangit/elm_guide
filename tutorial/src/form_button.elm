@@ -32,7 +32,7 @@ update msg model
     Name name -> { model | name = name }
     Password password -> { model | password = password }
     PasswordAgain passwordAgain -> { model | passwordAgain = passwordAgain}
-    Age age -> { model | age = age} -- Stringで受け取って、あとで数値か判定？
+    Age age -> { model | age = age } -- Stringで受け取って、あとで数値か判定？
     Submit -> { model | showWarning = True }
 
 view : Model -> Html Msg
