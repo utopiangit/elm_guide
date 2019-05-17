@@ -36,7 +36,7 @@ type alias Model
 
 init : Model
 init = 
-  Model "Yuucha" "" "" "0" []
+  Model "Yuucha" "" "Food" "0" []
 
 type Msg 
   = InputUser String
@@ -70,12 +70,12 @@ view model =
     [ Html.form 
         [ onSubmit Submit ]
         [ div [] 
-          [ text "User"
-          , select [ onInput InputUser ]
-              [ option [ value "Yuucha" ] [ text "Yuucha" ]
-              , option [ value "Naocha" ] [ text "Naocha" ]
-              ]
-          ]
+            [ text "User"
+            , select [ onInput InputUser ]
+                [ option [ value "Yuucha" ] [ text "Yuucha" ]
+                , option [ value "Naocha" ] [ text "Naocha" ]
+                ]
+            ]
         , div [] [ viewForm "Date" InputDate model.date ]
         , div [] 
           [ text "Category"
@@ -100,7 +100,7 @@ view model =
 viewForm txt ctor val = 
   div [] 
     [ text txt
-    , input [ onInput ctor, value val ] []
+    , input [ placeholder txt, onInput ctor, value val ] []
     ]
 
 showShopping : Shopping -> Html Msg
