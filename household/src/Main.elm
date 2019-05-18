@@ -35,8 +35,10 @@ type alias Model
     }
 
 init : Model
-init = 
-  Model "Yuucha" "" "Food" "0" []
+init = initialModel []
+
+initialModel : List Shopping -> Model 
+initialModel = Model "Yuucha" "" "Food" "0"
 
 type Msg 
   = InputUser String
@@ -61,7 +63,7 @@ update msg model =
       { model | amount = amount }
 
     Submit -> 
-      Model "Yuucha" "" "" "0" 
+      initialModel 
         <| (Shopping model.user model.date model.category model.amount) :: model.memos    
 
 view : Model -> Html Msg
@@ -76,8 +78,16 @@ view model =
                 , option [ value "Naocha" ] [ text "Naocha" ]
                 ]
             ]
-        , div [] [ viewForm "Date" InputDate model.date ]
         , div [] 
+            [ text "Date"
+            , input 
+                [ type_ "date"
+                , placeholder "Date"
+                , onInput InputDate
+                , value model.date
+                ] [] 
+            ]
+          , div [] 
           [ text "Category"
           , select [ onInput InputCategory ]
               [ option [ value "Food" ] [ text "Food" ]
@@ -94,13 +104,30 @@ view model =
                 [ text "submit" ]
             ]
         ]
-    , ul [] <| List.map showShopping model.memos
+    -- , ul [] <| List.map showShopping model.memos
+    , table [] <| viewHeader :: (List.map viewShopping model.memos)
     ]    
 
 viewForm txt ctor val = 
   div [] 
     [ text txt
     , input [ placeholder txt, onInput ctor, value val ] []
+    ]
+
+viewHeader  = 
+  thead [] 
+    [ th [] [text "user"]
+    , th [] [text "date"]
+    , th [] [text "category"]
+    , th [] [text "amount"]
+    ] 
+
+viewShopping shopping = 
+  tr [] 
+    [ td [] [ text shopping.user ]
+    , td [] [ text shopping.date ]
+    , td [] [ text shopping.category ]
+    , td [] [ text shopping.amount ]
     ]
 
 showShopping : Shopping -> Html Msg
