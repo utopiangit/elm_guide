@@ -46,6 +46,7 @@ type Msg
   | InputCategory String
   | InputAmount String
   | Submit
+  | Delete Int
 
 update : Msg -> Model -> Model
 update msg model =
@@ -65,6 +66,12 @@ update msg model =
     Submit -> 
       initialModel 
         <| (Shopping model.user model.date model.category model.amount) :: model.memos    
+
+    Delete n ->
+      let
+        t = model.memos
+      in
+        { model | memos = List.take n t ++ List.drop (n + 1) t }
 
 view : Model -> Html Msg
 view model = 
@@ -87,16 +94,16 @@ view model =
                 , value model.date
                 ] [] 
             ]
-          , div [] 
-          [ text "Category"
-          , select [ onInput InputCategory ]
-              [ option [ value "Food" ] [ text "Food" ]
-              , option [ value "EatOut" ] [ text "EatOut" ]
-              , option [ value "Transportation" ] [ text "Transportation" ]
-              , option [ value "Fashon" ] [ text "Fashon" ]
-              , option [ value "Other" ] [ text "Other" ]
-              ]
-          ]
+        , div [] 
+            [ text "Category"
+            , select [ onInput InputCategory ]
+                [ option [ value "Food" ] [ text "Food" ]
+                , option [ value "EatOut" ] [ text "EatOut" ]
+                , option [ value "Transportation" ] [ text "Transportation" ]
+                , option [ value "Fashon" ] [ text "Fashon" ]
+                , option [ value "Other" ] [ text "Other" ]
+                ]
+            ]
         , div [] [ viewForm "Amount" InputAmount model.amount ]
         , div [] 
             [ button 
@@ -105,7 +112,7 @@ view model =
             ]
         ]
     -- , ul [] <| List.map showShopping model.memos
-    , table [] <| viewHeader :: (List.map viewShopping model.memos)
+    , table [] <| viewHeader :: (List.map viewShopping <| List.indexedMap Tuple.pair model.memos)
     ]    
 
 viewForm txt ctor val = 
@@ -122,12 +129,13 @@ viewHeader  =
     , th [] [text "amount"]
     ] 
 
-viewShopping shopping = 
+viewShopping (n, shopping) = 
   tr [] 
     [ td [] [ text shopping.user ]
     , td [] [ text shopping.date ]
     , td [] [ text shopping.category ]
     , td [] [ text shopping.amount ]
+    , button [ onClick (Delete n) ] [ text "x"]
     ]
 
 showShopping : Shopping -> Html Msg
