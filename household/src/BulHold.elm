@@ -43,7 +43,7 @@ init : Model
 init = initialShopping [] Input
 
 initialShopping : List Shopping -> TabState -> Model 
-initialShopping = Model "Yuucha" "" "Food" "" ""
+initialShopping = Model "Chacha" "" "Food" "" ""
 
 type TabState 
   = Input
@@ -195,8 +195,8 @@ inputForm model = section NotSpaced []
         [ field []
           [ controlLabel [] [ text "Who you are" ]
           , controlSelect controlSelectModifiers [ onInput InputUser ] [ value model.user ]
-            [ option [] [ text "Yuucha" ]
-            , option [] [ text "Naocha" ]
+            [ option [] [ text "Chacha" ]
+            , option [] [ text "Noncha" ]
             ]
           ]
         , field []
