@@ -10,15 +10,22 @@ import Bulma.Components exposing (..)
 import Bulma.Columns as Columns exposing (..)
 import Bulma.Layout exposing (..)
 
-import Html exposing ( Html, Attribute, main_, span, a, p, img ,br, text, strong, option, small, input, i, thead, tr, td, th, a, div)
+import Html exposing ( Html, Attribute, main_, span, a, p, img ,br, text, strong, option, small, input, i )
 import Html.Attributes exposing ( attribute, style, src, placeholder, type_, href, rel, class, value )
 import Html.Events exposing (..)
+
+-- TODO
+-- Set today as an initial value in Date
+-- Store the shopping history into DB
+-- Statistics tab
+
 
 type alias Shopping
   = { user : String
     , date : String
     , category : String
     , amount : String
+    , memo : String
   }
 
 type alias Model 
@@ -26,16 +33,17 @@ type alias Model
     , date : String
     , category : String
     , amount : String
-    , memos : List Shopping
+    , memo : String
+    , shoppings : List Shopping
     , tab : TabState
     }
 
 
 init : Model
-init = initialModel [] History
+init = initialShopping [] Input
 
-initialModel : List Shopping -> TabState -> Model 
-initialModel = Model "Yuucha" "" "Food" "0"
+initialShopping : List Shopping -> TabState -> Model 
+initialShopping = Model "Yuucha" "" "Food" "" ""
 
 type TabState 
   = Input
@@ -46,6 +54,7 @@ type Msg
   | InputDate String
   | InputCategory String
   | InputAmount String
+  | InputMemo String
   | Submit
   | Delete Int
   | InputTab
@@ -67,16 +76,20 @@ update msg model =
     InputAmount amount ->
       { model | amount = amount }
 
+    InputMemo memo ->
+      { model | memo = memo }
+
     Submit -> 
-      initialModel 
-        ((Shopping model.user model.date model.category model.amount) :: model.memos)
+      -- { model | memos = (Shopping model.user model.date model.category model.amount) :: model.memos }
+      initialShopping 
+        ((Shopping model.user model.date model.category model.amount model.memo) :: model.shoppings)
         Input
 
     Delete n ->
       let
-        t = model.memos
+        t = model.shoppings
       in
-        { model | memos = List.take n t ++ List.drop (n + 1) t }
+        { model | shoppings = List.take n t ++ List.drop (n + 1) t }
 
     InputTab -> 
       { model | tab = Input }
@@ -104,7 +117,6 @@ view model
   = main_ []
     [ stylesheet
     , fontAwesomeCDN
-    -- , exampleElementsAndComponents
     , topHero
     , tabsView model
     , contentView model
@@ -115,7 +127,7 @@ topHero
   = hero { heroModifiers | color = Info, size = Small } []
       [ heroBody []
         [ container []
-          [ title H2 [] [ text "HouseHold app" ] ]
+          [ title H3 [] [ text "HouseHold app" ] ]
         ]
       ]
 
@@ -128,6 +140,7 @@ tabsView model =
           [ icon Standard [] [ i [ class "fa fa-history" ] [] ], text "History" ]
       ]
 
+contentView : Model -> Html Msg
 contentView model = 
   case model.tab of
           Input -> inputForm model
@@ -136,55 +149,49 @@ contentView model =
 historyView : Model -> Html Msg
 historyView model = section NotSpaced []
     [ panel []
-        [ demoSection "Shoppings" []
-          ([ field []
-            [ controlLabel [] [ text "Recent items you bought.." ]
-            ]
-          ] ++ (viewShopping (List.indexedMap Tuple.pair model.memos)))
-        , demoSection "" [] 
-            [ table tableModifiers [] 
-                [ tableHead [] 
-                  [ tableRow False [] 
-                      [ tableCell [] [ text "Date" ]
-                      , tableCell [] [ text "User"]
-                      , tableCell [] [ text "Category"]
-                      , tableCell [] [ text "Amount"]
-                      ]
-                  ]
-                , tableBody [] 
-                  [ tableRow False [] 
-                      [ tableCell [] [ text "1, 1" ]
-                      , tableCell [] [ text "1, 2"]
-                      , tableCell [] [ text "1, 3"]
-                      ]
-                  , tableRow False [] 
-                      [ tableCell [] [ text "2, 1" ]
-                      , tableCell [] [ text "2, 2"]
-                      , tableCell [] [ text "2, 3"]
-                      ]
-                  ]
-                ] 
-            ]
+        [ demoSection "Shopping History" []
+          [ field [] [ controlLabel [] [ text "Recent expenses.." ] ]
+          , tableShopping model.shoppings
+          ]
         ]
     ]
 
-viewShopping : List (Int, Shopping) -> List (Html Msg)
-viewShopping hist = 
-  let
-    viewOne : (Int, Shopping) -> Html Msg
-    viewOne (n, shopping) = container [] 
-      [ text <| shopping.date ++ shopping.user ++ shopping.category ++ shopping.amount 
-      , controlButton { buttonModifiers | size = Small, color = Light } 
-          [ onClick (Delete n) ]
-          []
-          [ text "x" ]
+rowShopping : (Int, Shopping) -> TablePartition Msg
+rowShopping (n, shopping) = 
+  tableRow False [] 
+    [ tableCell [] [ text shopping.date ]
+    , tableCell [] [ text shopping.user ]
+    , tableCell [] [ text shopping.category ]
+    , tableCell [] [ text shopping.amount ]
+    , tableCell [] [ text shopping.memo ]
+    , tableCell [] 
+      [ controlButton { buttonModifiers | color = Light, size = Small } 
+        [ onClick (Delete n) ] 
+        [] 
+        [ text "x" ] 
       ]
-  in List.map viewOne hist
+    ]
+
+tableShopping : List Shopping -> Table Msg
+tableShopping hist = 
+  table tableModifiers [] 
+    [ tableHead [] 
+      [ tableRow False [] 
+          [ tableCell [] [ text "Date" ]
+          , tableCell [] [ text "User"]
+          , tableCell [] [ text "Category"]
+          , tableCell [] [ text "Amount"]
+          , tableCell [] [ text "Memo"]
+          , tableCell [] [ text "Delete"]
+          ]
+      ]
+    , tableBody [] << List.map rowShopping <| List.indexedMap Tuple.pair hist
+    ]
 
 inputForm : Model -> Html Msg
 inputForm model = section NotSpaced []
-    [ container [ onSubmit Submit ]
-      [ demoSection "Register.." [ onSubmit Submit ]
+    [ container []
+      [ demoSection "Register.." []
         [ field []
           [ controlLabel [] [ text "Who you are" ]
           , controlSelect controlSelectModifiers [ onInput InputUser ] [ value model.user ]
@@ -211,15 +218,26 @@ inputForm model = section NotSpaced []
           , controlSelect controlSelectModifiers [ onInput InputCategory ] [ value model.category ]
             [ option [] [ text "Food" ]
             , option [] [ text "EatOut" ]
+            , option [] [ text "Livingware" ]
             , option [] [ text "Transportation" ]
             , option [] [ text "Fashon" ]
+            , option [] [ text "Leisure" ]
+            , option [] [ text "Hobby" ]
+            , option [] [ text "Gas, Water, Electric, e.t.c." ]
+            , option [] [ text "Rent" ]
             , option [] [ text "Medical" ]
             , option [] [ text "Other" ]
             ]
           ]
         , field []
-          [ controlLabel [] [ text "How much is it" ]
-          , controlInput controlInputModifiers [ onInput InputAmount ] [ placeholder "price", value model.amount ] [] 
+          [ controlLabel [] [ text "How much it is" ]
+          , controlInput controlInputModifiers [ onInput InputAmount ] 
+            [ placeholder "price", value model.amount ] [] 
+          ]        
+        , field []
+          [ controlLabel [] [ text "Memo" ]
+          , controlInput controlInputModifiers [ onInput InputMemo ] 
+            [ placeholder "What you bought / Where you bought it e.t.c.", value model.memo ] [] 
           ]        
         , field []
           [ controlButton { buttonModifiers | color = Link } [ onClick Submit ] []
@@ -246,16 +264,6 @@ myColumnModifiers offset width
                , fullHD     = width
              }
        }
-
-demoArticle : String -> List (Html Msg) -> Html Msg
-demoArticle aTitle someHtmls
-  = columns columnsModifiers []
-    [ column (myColumnModifiers Auto (Just Width2)) []
-      [ title H4 [] [ strong [] [ text aTitle ] ]
-      ]
-    , column (myColumnModifiers Auto (Just Auto)) []
-      someHtmls
-    ]
 
 demoSection : String -> List (Attribute Msg) -> List (Html Msg) -> Html Msg
 demoSection aSubtitle someAttrs someHtmls
