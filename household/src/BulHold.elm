@@ -1,4 +1,4 @@
-module Example exposing (..)
+module BulHold exposing (..)
 
 import Browser
 import Bulma.CDN exposing (..)
