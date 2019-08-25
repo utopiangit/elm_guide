@@ -3,6 +3,7 @@ import Html exposing (..)
 import Task
 import Time
 import Html.Events exposing (onInput, onClick)
+import Html.Attributes exposing (style)
 
 main = 
   Browser.element {
@@ -33,10 +34,11 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model = 
   case msg of
     Tick newTime -> (
-      if model.isWorking then
-        { model | time = newTime }
-      else 
-        model
+      { model | time = newTime }
+      -- if model.isWorking then
+      --   { model | time = newTime }
+      -- else 
+      --   model
       , Cmd.none
      )
     AdjustTimeZone newZone -> (
@@ -49,9 +51,17 @@ update msg model =
       )
     
 
+-- subscriptions : Model -> Sub Msg
+-- subscriptions model =
+--     Time.every 1000 Tick
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
+  if model.isWorking then
     Time.every 1000 Tick
+  else 
+    Sub.none
+
 
 view : Model -> Html Msg
 view model = 
@@ -67,4 +77,6 @@ timer model =
     minute = String.fromInt (Time.toMinute model.zone model.time)
     second = String.fromInt (Time.toSecond model.zone model.time)
   in
-    h1 [] [ text (hour ++ ":" ++ minute ++ ":" ++ second) ]
+    h1 
+      [ style "background-color" "gray" ] 
+      [ text (hour ++ ":" ++ minute ++ ":" ++ second) ]
