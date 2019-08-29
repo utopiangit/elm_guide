@@ -1,5 +1,5 @@
-module BulHold exposing (..)
-
+port module BulHold exposing (..)
+import Json.Encode as E
 import Browser
 import Bulma.CDN exposing (..)
 import Bulma.Modifiers exposing (..)
@@ -14,11 +14,18 @@ import Html exposing ( Html, Attribute, main_, span, a, p, img ,br, text, strong
 import Html.Attributes exposing ( attribute, style, src, placeholder, type_, href, rel, class, value )
 import Html.Events exposing (..)
 
+import Json.Encode as E
+
 -- TODO
 -- Set today as an initial value in Date
 -- Store the shopping history into DB
 -- Statistics tab
 
+port cache : E.Value -> Cmd msg
+
+cacheCount : Int -> Cmd msg
+cacheCount =
+    cache << E.int
 
 type alias Shopping
   = { user : String
@@ -39,8 +46,8 @@ type alias Model
     }
 
 
-init : Model
-init = initialShopping [] Input
+init : () -> (Model, Cmd msg)
+init _ = (initialShopping [] Input, Cmd.none)
 
 initialShopping : List Shopping -> TabState -> Model 
 initialShopping = Model "Chacha" "" "Food" "" ""
@@ -59,50 +66,58 @@ type Msg
   | Delete Int
   | InputTab
   | HistoryTab
+  | Cache
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     InputUser user ->
-      { model | user = user }
+      ({ model | user = user }, Cmd.none)
 
     InputDate date ->
-      { model | date = date }
+      ({ model | date = date }, Cmd.none)
 
     InputCategory category ->
-      { model | category = category }
+      ({ model | category = category }, Cmd.none)
 
     InputAmount amount ->
-      { model | amount = amount }
+      ({ model | amount = amount }, Cmd.none)
 
     InputMemo memo ->
-      { model | memo = memo }
+      ({ model | memo = memo }, Cmd.none)
 
     Submit -> 
       -- { model | memos = (Shopping model.user model.date model.category model.amount) :: model.memos }
-      initialShopping 
-        ((Shopping model.user model.date model.category model.amount model.memo) :: model.shoppings)
-        Input
+      ( initialShopping 
+          ((Shopping model.user model.date model.category model.amount model.memo) :: model.shoppings)
+          Input
+      , Cmd.none)
+
 
     Delete n ->
       let
         t = model.shoppings
       in
-        { model | shoppings = List.take n t ++ List.drop (n + 1) t }
+        ({ model | shoppings = List.take n t ++ List.drop (n + 1) t }
+        , Cmd.none)
 
     InputTab -> 
-      { model | tab = Input }
+      ({ model | tab = Input }, Cmd.none)
 
     HistoryTab -> 
-      { model | tab = History }
+      ({ model | tab = History }, Cmd.none)
+
+    Cache -> 
+      (model, cacheCount 1)
 
 main : Program () Model Msg
 main
-  = Browser.sandbox
+  = Browser.element
     { init = init
     , view = view
     , update = update
+    , subscriptions = subscriptions
     }
 
 fontAwesomeCDN
@@ -244,6 +259,12 @@ inputForm model = section NotSpaced []
             [ text "Register"
             ]
           ]
+        , field []
+          [ controlButton { buttonModifiers | color = Link } [ onClick Cache ] []
+            [ text "Cache"
+            ]
+          ]
+
         ]
       ]
     ]
@@ -275,3 +296,6 @@ demoSection aSubtitle someAttrs someHtmls
       someHtmls
     ]
 
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  Sub.none
