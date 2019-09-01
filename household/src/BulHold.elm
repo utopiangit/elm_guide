@@ -15,17 +15,41 @@ import Html.Attributes exposing ( attribute, style, src, placeholder, type_, hre
 import Html.Events exposing (..)
 
 import Json.Encode as E
+import Json.Decode as D
+
+
+encodeShopping : Shopping -> E.Value
+encodeShopping model = 
+  E.object
+    [ ("user", E.string model.user)
+    , ("date", E.string model.date)
+    , ("category", E.string model.category)
+    , ("amount", E.string model.amount)
+    , ("memo", E.string model.memo)
+    ]
+
+encode : Model -> E.Value
+encode model = 
+  E.list encodeShopping model.shoppings
+
+-- decoder : D.Decoder Model
+-- decoder = D.map Model 
 
 -- TODO
 -- Set today as an initial value in Date
 -- Store the shopping history into DB
 -- Statistics tab
 
-port cache : E.Value -> Cmd msg
+port store : E.Value -> Cmd msg
 
-cacheCount : Int -> Cmd msg
-cacheCount =
-    cache << E.int
+-- cacheCount : Int -> Cmd msg
+-- cacheCount _ =
+--     -- cache << E.int
+--     store (E.object
+--     [ ("user", E.string "Yuucha")
+--     , ("price", E.int 1000)
+--     ])
+-- -- cacheCount x = cache (E.int x)
 
 type alias Shopping
   = { user : String
@@ -66,7 +90,6 @@ type Msg
   | Delete Int
   | InputTab
   | HistoryTab
-  | Cache
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -92,8 +115,7 @@ update msg model =
       ( initialShopping 
           ((Shopping model.user model.date model.category model.amount model.memo) :: model.shoppings)
           Input
-      , Cmd.none)
-
+      , store (encode model))
 
     Delete n ->
       let
@@ -107,9 +129,6 @@ update msg model =
 
     HistoryTab -> 
       ({ model | tab = History }, Cmd.none)
-
-    Cache -> 
-      (model, cacheCount 1)
 
 main : Program () Model Msg
 main
@@ -259,12 +278,6 @@ inputForm model = section NotSpaced []
             [ text "Register"
             ]
           ]
-        , field []
-          [ controlButton { buttonModifiers | color = Link } [ onClick Cache ] []
-            [ text "Cache"
-            ]
-          ]
-
         ]
       ]
     ]

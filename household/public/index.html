@@ -29,10 +29,12 @@
     firebase.initializeApp(firebaseConfig);
     var firestore = firebase.firestore();
 
-    const docRef = firestore.collection("samples").doc("data");
+    const docRef = firestore.collection("shopping").doc("record");
 
-    app.ports.cache.subscribe(function(data) {
-      docRef.set({ cache : JSON.stringify(data) });
+    console.log()
+    app.ports.store.subscribe(function(data) {
+      docRef.set({ stored : JSON.stringify(data) });
+      // docRef.set(data);
       // localStorage.setItem('cache', JSON.stringify(data));
     });
   </script>
